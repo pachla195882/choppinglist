@@ -30,14 +30,14 @@ import com.radpac.shoppinglistapp.ui.theme.ChoppingListTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //enableEdgeToEdge() <--
+//        enableEdgeToEdge()
         setContent {
             ChoppingListTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    ChoppingListApp()
+                    ShoppingListApp()
                 }
             }
         }
