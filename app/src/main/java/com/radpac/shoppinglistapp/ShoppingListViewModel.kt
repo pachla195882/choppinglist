@@ -1,6 +1,7 @@
 package com.radpac.shoppinglistapp
 
 import android.util.Log
+import androidx.activity.BackEventCompat
 import androidx.lifecycle.ViewModel
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -19,10 +20,13 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
@@ -132,27 +137,43 @@ fun ShoppingListItem(
     onEditClick: () -> Unit, //lambda function is executed when edit action is triggered
     onDeleteClick: () -> Unit
 ) {
-    Row(
+    Card(
         modifier = Modifier
             .padding(8.dp)
-            .fillMaxWidth()
-            .border(
-                border = BorderStroke(2.dp, Color.Black)
-            ),
-        horizontalArrangement = Arrangement.Absolute.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .fillMaxWidth(),
+        onClick = {}, // Add an empty onClick to make the whole card clickable if needed
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White, // Use primaryContainer for a subtle background
+        ),
+        shape = MaterialTheme.shapes.medium,
+        elevation = CardDefaults.cardElevation(defaultElevation = 16.dp) // Add a subtle shadow
     ) {
-        Text(text = item.name, modifier = Modifier.padding(8.dp))
-        Text(text = "Qty: ${item.quantity}", modifier = Modifier.padding(8.dp))
-        Row(modifier = Modifier.padding(8.dp)) {
-            IconButton(onClick = onEditClick) {
-                Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")
-                Log.d("ShoppingListItem", "Edit button clicked for item: ${item.name}")
-            }
-            IconButton(onClick = onDeleteClick) {
-                Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")
-                Log.d("ShoppingListItem", "Delete button clicked for item: ${item.name}")
-
+        Row(
+            modifier = Modifier
+                .padding(16.dp) // Increase padding inside the card
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = item.name, style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.primary) // Use a larger text style
+            Text(text = "Qty: ${item.quantity}", style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary)
+            Row {
+                IconButton(onClick = onEditClick) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit",
+                        tint = MaterialTheme.colorScheme.primary // Use a color that contrasts with the background
+                    )
+                }
+                IconButton(onClick = onDeleteClick) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete",
+                        tint = MaterialTheme.colorScheme.primary // Use the error color for delete
+                    )
+                }
             }
         }
     }
@@ -199,6 +220,7 @@ fun ShoppingListApp(viewModel: ShoppingListViewModel = ShoppingListViewModel()) 
                     )
                 }
             }
+
         }
     }
     if (showDialog) {
