@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,9 +17,10 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
@@ -142,7 +144,7 @@ fun ShoppingListItem(
             containerColor = Color.White, // Use primaryContainer for a subtle background
         ),
         shape = MaterialTheme.shapes.medium,
-        elevation = CardDefaults.cardElevation(defaultElevation = 16.dp) // Add a subtle shadow
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp) // Add a subtle shadow
     ) {
         Row(
             modifier = Modifier
@@ -197,7 +199,8 @@ fun ShoppingListApp(viewModel: ShoppingListViewModel = ShoppingListViewModel()) 
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
-                .padding(innerPadding)
+                .padding(innerPadding),
+            contentPadding = PaddingValues(bottom = 80.dp)
         ) {
             items(sItems) { item ->
                 if (item.isEditing) {
@@ -232,25 +235,33 @@ fun ShoppingListApp(viewModel: ShoppingListViewModel = ShoppingListViewModel()) 
                         .padding(8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Button(onClick = {
-                        if (itemName.isNotBlank() && itemQuantity.isNotBlank()) {
-                            val newItem = ShoppingItem(
-                                id = sItems.size + 1,
-                                name = itemName,
-                                quantity = itemQuantity.toInt()
-                            )
-                            viewModel.addItem(newItem)
-                            viewModel.hideDialog()
-                            viewModel.clearItemData()
-                            Log.d("ShoppingListApp", "Item added: $newItem")
-                        }
-                    }) {
+                    ElevatedButton(
+                        onClick = {
+                            if (itemName.isNotBlank() && itemQuantity.isNotBlank()) {
+                                val newItem = ShoppingItem(
+                                    id = sItems.size + 1,
+                                    name = itemName,
+                                    quantity = itemQuantity.toInt()
+                                )
+                                viewModel.addItem(newItem)
+                                viewModel.hideDialog()
+                                viewModel.clearItemData()
+                                Log.d("ShoppingListApp", "Item added: $newItem")
+                            }
+                        },
+                        elevation = ButtonDefaults.buttonElevation(8.dp),
+                        colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
+                    ) {
                         Text(text = "Add")
                     }
-                    Button(onClick = {
+                    ElevatedButton(
+                        onClick = {
                         viewModel.hideDialog()
                         viewModel.clearItemData()
-                    }) {
+                        },
+                        elevation = ButtonDefaults.buttonElevation(8.dp),
+                        colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
+                    ) {
                         Text(text = "Cancel")
                     }
                 }
@@ -286,14 +297,25 @@ fun ShoppingItemEditor(item: ShoppingItem, onEditComplete: (String, Int) -> Unit
     var editedQuantity by remember { mutableStateOf(item.quantity.toString()) }
     var isEditing by remember { mutableStateOf(item.isEditing) }
 
-    Row(
+    Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-            .padding(8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(8.dp)
+            .fillMaxWidth(),
+        //onClick = {}, // Add an empty onClick to make the whole card clickable if needed
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White, // Use primaryContainer for a subtle background
+        ),
+        shape = MaterialTheme.shapes.medium,
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp), // Add a subtle shadow
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -315,7 +337,8 @@ fun ShoppingItemEditor(item: ShoppingItem, onEditComplete: (String, Int) -> Unit
                 modifier = Modifier.padding(8.dp)
             )
 
-            Button(
+            ElevatedButton(
+                modifier = Modifier.padding(8.dp),
                 onClick = {
                     isEditing = false
                     onEditComplete(editedName, editedQuantity.toIntOrNull() ?: 1)
@@ -323,13 +346,15 @@ fun ShoppingItemEditor(item: ShoppingItem, onEditComplete: (String, Int) -> Unit
                         "ShoppingItemEditor", "Item edited: $editedName," +
                                 " $editedQuantity"
                     )
-                }
+                },
+                colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
             ) {
                 Text("Modify")
             }
 
         }
 
+    }
     }
 }
 
