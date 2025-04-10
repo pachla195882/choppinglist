@@ -102,10 +102,14 @@ class ShoppingListViewModel : ViewModel() {
 
     fun updateItemQuantity(quantity: String) {
         _itemQuantity.update { quantity }
-        if (quantity.isNotEmpty() && quantity.toIntOrNull() == null) {
-            _quantityError.update { "Quantity must be a number!" }
+        _quantityError.update { validateQuantity(quantity) }
+    }
+
+    fun validateQuantity(quantity: String): String? {
+        return if (quantity.isNotEmpty() && quantity.toIntOrNull() == null) {
+            "Quantity must be a number!"
         } else {
-            _quantityError.update { null }
+            null
         }
     }
 
@@ -163,10 +167,14 @@ fun ShoppingListItem(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = item.name, style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.primary) // Use a larger text style
-            Text(text = "Qty: ${item.quantity}", style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary)
+            Text(
+                text = item.name, style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.primary
+            ) // Use a larger text style
+            Text(
+                text = "Qty: ${item.quantity}", style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
             Row {
                 IconButton(onClick = onEditClick) {
                     Icon(
@@ -199,7 +207,7 @@ fun ShoppingListApp(viewModel: ShoppingListViewModel = ShoppingListViewModel()) 
         modifier = Modifier.fillMaxSize(),
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = { viewModel.showDialog()},
+                onClick = { viewModel.showDialog() },
                 modifier = Modifier.padding(8.dp),
                 icon = { Icon(imageVector = Icons.Default.Add, contentDescription = "Add") },
                 text = { Text(text = "Add Item") })
@@ -216,7 +224,10 @@ fun ShoppingListApp(viewModel: ShoppingListViewModel = ShoppingListViewModel()) 
             items(sItems) { item ->
                 if (item.isEditing) {
                     ShoppingItemEditor(item = item, onEditComplete = { editedName, editedQuantity ->
-                        viewModel.updateItem(item, editedName, editedQuantity) })
+                        viewModel.updateItem(item, editedName, editedQuantity)
+                    },
+                        validateQuantity = viewModel::validateQuantity // Pass the function
+                    )
                 } else {
                     // Display the item
                     ShoppingListItem(
@@ -224,9 +235,11 @@ fun ShoppingListApp(viewModel: ShoppingListViewModel = ShoppingListViewModel()) 
                         onEditClick = {
                             // finding out which item we are editing and changing its "isEditing"
                             // value to true
-                            viewModel.toggleEditing(item) },
+                            viewModel.toggleEditing(item)
+                        },
                         onDeleteClick = {
-                            viewModel.removeItem(item) }
+                            viewModel.removeItem(item)
+                        }
                     )
                 }
             }
@@ -249,7 +262,8 @@ fun ShoppingListApp(viewModel: ShoppingListViewModel = ShoppingListViewModel()) 
                     ElevatedButton(
                         onClick = {
                             if (itemName.isNotBlank() && itemQuantity.isNotBlank() &&
-                                quantityError == null) {
+                                quantityError == null
+                            ) {
                                 val newItem = ShoppingItem(
                                     id = sItems.size + 1,
                                     name = itemName,
@@ -269,8 +283,8 @@ fun ShoppingListApp(viewModel: ShoppingListViewModel = ShoppingListViewModel()) 
                     }
                     ElevatedButton(
                         onClick = {
-                        viewModel.hideDialog()
-                        viewModel.clearItemData()
+                            viewModel.hideDialog()
+                            viewModel.clearItemData()
                         },
                         elevation = ButtonDefaults.buttonElevation(8.dp),
                         colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
@@ -311,10 +325,12 @@ fun ShoppingListApp(viewModel: ShoppingListViewModel = ShoppingListViewModel()) 
 }
 
 @Composable
-fun ShoppingItemEditor(item: ShoppingItem, onEditComplete: (String, Int) -> Unit) {
+fun ShoppingItemEditor(item: ShoppingItem, onEditComplete: (String, Int) -> Unit,
+                       validateQuantity: (String) -> String?) {
     var editedName by remember { mutableStateOf(item.name) }
     var editedQuantity by remember { mutableStateOf(item.quantity.toString()) }
     var isEditing by remember { mutableStateOf(item.isEditing) }
+    var quantityError by remember { mutableStateOf<String?>(null) }
 
     Card(
         modifier = Modifier
@@ -335,46 +351,53 @@ fun ShoppingItemEditor(item: ShoppingItem, onEditComplete: (String, Int) -> Unit
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-        ) {
-            OutlinedTextField(
-                value = editedName,
-                onValueChange = { editedName = it },
-                label = { Text("Name") },
-                singleLine = true,
-                modifier = Modifier.padding(8.dp)
-            )
-
-            OutlinedTextField(
-                value = editedQuantity,
-                onValueChange = { editedQuantity = it },
-                label = { Text("Quantity") },
-                singleLine = true,
-                modifier = Modifier.padding(8.dp)
-            )
-
-            ElevatedButton(
-                modifier = Modifier.padding(8.dp),
-                onClick = {
-                    isEditing = false
-                    onEditComplete(editedName, editedQuantity.toIntOrNull() ?: 1)
-                    Log.d(
-                        "ShoppingItemEditor", "Item edited: $editedName," +
-                                " $editedQuantity"
-                    )
-                },
-                colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary),
-                elevation = ButtonDefaults.buttonElevation(8.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
             ) {
-                Text("Modify")
+                OutlinedTextField(
+                    value = editedName,
+                    onValueChange = { editedName = it },
+                    label = { Text("Name") },
+                    singleLine = true,
+                    modifier = Modifier.padding(8.dp)
+                )
+
+                OutlinedTextField(
+                    value = editedQuantity,
+                    onValueChange = { editedQuantity = it
+                                    quantityError = validateQuantity(it)
+                                    },
+                    label = { Text("Quantity") },
+                    singleLine = true,
+                    modifier = Modifier.padding(8.dp)
+                )
+                Text(
+                    text = quantityError ?: "", // Display the error message
+                    color = MaterialTheme.colorScheme.error, // Use error color (usually red)
+                    style = MaterialTheme.typography.bodySmall, // Use a smaller text style
+                    modifier = Modifier.padding(start = 8.dp) // Add some left padding
+                )
+
+                ElevatedButton(
+                    modifier = Modifier.padding(8.dp),
+                    onClick = {
+                        isEditing = false
+                        onEditComplete(editedName, editedQuantity.toIntOrNull() ?: 1)
+                        Log.d(
+                            "ShoppingItemEditor", "Item edited: $editedName," +
+                                    " $editedQuantity"
+                        )
+                    },
+                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary),
+                    elevation = ButtonDefaults.buttonElevation(8.dp),
+                    enabled = quantityError == null
+                ) {
+                    Text("Modify")
+                }
             }
-
         }
-
-    }
     }
 }
 
