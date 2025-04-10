@@ -67,6 +67,9 @@ class ShoppingListViewModel : ViewModel() {
     private val _itemQuantity = MutableStateFlow("")
     val itemQuantity: StateFlow<String> = _itemQuantity.asStateFlow()
 
+    private val _quantityError = MutableStateFlow<String?>(null)
+    val quantityError: StateFlow<String?> = _quantityError.asStateFlow()
+
     fun addItem(item: ShoppingItem) {
         viewModelScope.launch {
             _sItems.update { currentItems -> currentItems + item }
@@ -99,6 +102,11 @@ class ShoppingListViewModel : ViewModel() {
 
     fun updateItemQuantity(quantity: String) {
         _itemQuantity.update { quantity }
+        if (quantity.isNotEmpty() && quantity.toIntOrNull() == null) {
+            _quantityError.update { "Quantity must be a number!" }
+        } else {
+            _quantityError.update { null }
+        }
     }
 
     fun showDialog() {
@@ -107,11 +115,13 @@ class ShoppingListViewModel : ViewModel() {
 
     fun hideDialog() {
         _showDialog.update { false }
+        _quantityError.update { null }
     }
 
     fun clearItemData() {
         _itemName.update { "" }
         _itemQuantity.update { "" }
+        _quantityError.update { null }
     }
 
     fun toggleEditing(item: ShoppingItem) {
@@ -139,7 +149,7 @@ fun ShoppingListItem(
         modifier = Modifier
             .padding(8.dp)
             .fillMaxWidth(),
-        onClick = {}, // Add an empty onClick to make the whole card clickable if needed
+        //onClick = {}, // Add an empty onClick to make the whole card clickable if needed
         colors = CardDefaults.cardColors(
             containerColor = Color.White, // Use primaryContainer for a subtle background
         ),
@@ -183,6 +193,7 @@ fun ShoppingListApp(viewModel: ShoppingListViewModel = ShoppingListViewModel()) 
     val showDialog by viewModel.showDialog.collectAsState()
     val itemName by viewModel.itemName.collectAsState()
     val itemQuantity by viewModel.itemQuantity.collectAsState()
+    val quantityError by viewModel.quantityError.collectAsState()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -237,7 +248,8 @@ fun ShoppingListApp(viewModel: ShoppingListViewModel = ShoppingListViewModel()) 
                 ) {
                     ElevatedButton(
                         onClick = {
-                            if (itemName.isNotBlank() && itemQuantity.isNotBlank()) {
+                            if (itemName.isNotBlank() && itemQuantity.isNotBlank() &&
+                                quantityError == null) {
                                 val newItem = ShoppingItem(
                                     id = sItems.size + 1,
                                     name = itemName,
@@ -249,6 +261,7 @@ fun ShoppingListApp(viewModel: ShoppingListViewModel = ShoppingListViewModel()) 
                                 Log.d("ShoppingListApp", "Item added: $newItem")
                             }
                         },
+                        enabled = quantityError == null,
                         elevation = ButtonDefaults.buttonElevation(8.dp),
                         colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
                     ) {
@@ -284,6 +297,12 @@ fun ShoppingListApp(viewModel: ShoppingListViewModel = ShoppingListViewModel()) 
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp)
+                    )
+                    Text(
+                        text = quantityError ?: "", // Display the error message
+                        color = MaterialTheme.colorScheme.error, // Use error color (usually red)
+                        style = MaterialTheme.typography.bodySmall, // Use a smaller text style
+                        modifier = Modifier.padding(start = 8.dp) // Add some left padding
                     )
                 }
             },
@@ -347,7 +366,8 @@ fun ShoppingItemEditor(item: ShoppingItem, onEditComplete: (String, Int) -> Unit
                                 " $editedQuantity"
                     )
                 },
-                colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
+                colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary),
+                elevation = ButtonDefaults.buttonElevation(8.dp)
             ) {
                 Text("Modify")
             }
